@@ -1,6 +1,6 @@
 {
-  "name": "@sensative/jsep-eval",
-  "version": "1.0.1",
+  "name": "@betastreet/jsep-eval",
+  "version": "2.0.0",
   "description": "A configurable eval function, which uses jsep to parse expressions. The generated result is evaluated w.r.t. a supplied object context.",
   "main": "src/jsep-eval.js",
   "scripts": {
@@ -17,12 +17,12 @@
   ],
   "author": "Fredrik Carlsson",
   "contributors": [
-    "6u"
+    "6utt3rfly"
   ],
   "license": "MIT",
   "dependencies": {
-    "jsep": "^0.3.3",
-    "lodash": "^4.17.5"
+    "jsep": "^0.3.5",
+    "lodash": "^4.17.20"
   },
   "devDependencies": {
     "jest": "^26.6.3"
