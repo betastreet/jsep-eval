@@ -55,6 +55,7 @@ describe('======== ' + name + ' =========', () => {
       const ctx = {a: arg => 2 * arg, b: 3};
       expect(jsepEval.evaluate(exp, ctx)).toEqual(6);
     });
+
     test(name + ': evaluate a "this" expression', () => {
       const exp = 'this';
       const ctx = {};
@@ -142,7 +143,7 @@ describe('======== ' + name + ' =========', () => {
       ['arr.findIndex(b.isEleven)', 1],
       // ['[1, 2].length + 1', 3],
       ['_.concat(["a", "bcd"], "ef").join(",").length * 2 || 0', 16],
-    ])('%# Should support complex expression %s', (expression, exp) => {
+    ])(name + ': %# Should support complex expression %s', (expression, exp) => {
       expect(jsepEval.evaluate(expression, {
         _,
         a: 1,
@@ -348,6 +349,20 @@ describe('======== ' + name + ' =========', () => {
       const original = jsepEval.getParser();
       expect(jsepEval.setParser('mock').getParser()).toEqual('mock');
       expect(jsepEval.restoreParser().getParser()).toEqual(original);
+    });
+
+    test(name + ': should be able to add node types', () => {
+      jsepEval.addType('LITERAL', 'Literal', (node, context) => context.a);
+      expect(jsepEval.evaluate('"1"', { a: 10 }))
+        .toEqual(10);
+    });
+
+    test(name + ': should be able to get/delete/add node types', () => {
+      const original = jsepEval.getType('LITERAL');
+      jsepEval.removeType('LITERAL');
+      expect(() => jsepEval.evaluate('1')).toThrow();
+      jsepEval.addType('LITERAL', original.type, original.fn);
+      expect(jsepEval.evaluate('1')).toEqual(1);
     });
   });
 
