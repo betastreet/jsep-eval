@@ -8,7 +8,14 @@ const jsep = require('jsep');
 const assert = require('assert');
 
 module.exports = class JsepEval {
+  static #_instance;
+
+  static get instance() {
+    return this.#_instance || new JsepEval();
+  }
+
   constructor() {
+    JsepEval.#_instance = this;
     this.jsep = jsep;
 
     // defaults
@@ -109,7 +116,8 @@ module.exports = class JsepEval {
     return this;
   }
 
-  addType(type, nodeType) {
+  // TODO:
+  addType(type, nodeType, fn) {
     this.types[type] = nodeType;
     return this;
   }
