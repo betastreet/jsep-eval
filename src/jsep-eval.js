@@ -1,4 +1,9 @@
-const _ = require('lodash');
+const get = require('lodash/get');
+const set = require('lodash/set');
+const has = require('lodash/has');
+const lastIndexOf = require('lodash/lastIndexOf');
+const map = require('lodash/map');
+const includes = require('lodash/includes');
 const jsep = require('jsep');
 const assert = require('assert');
 
@@ -123,8 +128,8 @@ module.exports = class JsepEval {
   getParameterPath(node, context) {
     assert(node, 'Node missing');
     const type = node.type;
-    assert(_.includes(this.types, type), 'invalid node type');
-    assert(_.includes([this.types.MEMBER, this.types.IDENTIFIER], type), 'Invalid parameter path node type: ', type);
+    assert(includes(this.types, type), 'invalid node type');
+    assert(includes([this.types.MEMBER, this.types.IDENTIFIER], type), 'Invalid parameter path node type: ', type);
     // the easy case: 'IDENTIFIER's
     if (type === this.types.IDENTIFIER) {
       return node.name;
@@ -135,7 +140,7 @@ module.exports = class JsepEval {
     const computed = node.computed;
     const object = node.object;
     // object is either 'IDENTIFIER', 'MEMBER', or 'THIS'
-    assert(_.includes([this.types.MEMBER, this.types.IDENTIFIER, this.types.THIS], object.type), 'Invalid object type');
+    assert(includes([this.types.MEMBER, this.types.IDENTIFIER, this.types.THIS], object.type), 'Invalid object type');
 
     const objectPath = object.type === this.types.THIS
       ? ''
@@ -154,14 +159,14 @@ module.exports = class JsepEval {
       // if computed -> evaluate anew
       return this.evaluateExpressionNode(property, context);
     } else {
-      assert(_.includes([this.types.MEMBER, this.types.IDENTIFIER], property.type), 'Invalid object type');
+      assert(includes([this.types.MEMBER, this.types.IDENTIFIER], property.type), 'Invalid object type');
       return property.name || this.getParameterPath(property, context);
     }
   }
 
   evaluateExpressionNode(node, context) {
     assert(node, 'Node missing');
-    assert(_.includes(this.types, node.type), 'invalid node type');
+    assert(includes(this.types, node.type), 'invalid node type');
     const result = (() => {
       switch (node.type) {
         case this.types.LITERAL: {
@@ -171,23 +176,23 @@ module.exports = class JsepEval {
           return context;
         }
         case this.types.COMPOUND: {
-          const expressions = _.map(node.body, el => this.evaluateExpressionNode(el, context));
+          const expressions = map(node.body, el => this.evaluateExpressionNode(el, context));
           return expressions.pop();
         }
         case this.types.ARRAY: {
-          const elements = _.map(node.elements, el => this.evaluateExpressionNode(el, context));
+          const elements = map(node.elements, el => this.evaluateExpressionNode(el, context));
           return elements;
         }
         case this.types.UNARY: {
           const operator = this.operators.unary[node.operator] || this.undefOperator;
-          assert(_.includes(this.operators.unary, operator), 'Invalid unary operator');
+          assert(includes(this.operators.unary, operator), 'Invalid unary operator');
           const argument = this.evaluateExpressionNode(node.argument, context);
           return operator(argument);
         }
         case this.types.LOGICAL: // !!! fall-through to BINARY !!! //
         case this.types.BINARY: {
           const operator = this.operators.binary[node.operator] || this.undefOperator;
-          assert(_.includes(this.operators.binary, operator), 'Invalid binary operator');
+          assert(includes(this.operators.binary, operator), 'Invalid binary operator');
           const left = this.evaluateExpressionNode(node.left, context);
           const right = this.evaluateExpressionNode(node.right, context);
           return operator(left, right);
@@ -199,18 +204,18 @@ module.exports = class JsepEval {
           return test ? consequent : alternate;
         }
         case this.types.CALL : {
-          assert(_.includes([this.types.MEMBER, this.types.IDENTIFIER, this.types.THIS], node.callee.type), 'Invalid function callee type');
+          assert(includes([this.types.MEMBER, this.types.IDENTIFIER, this.types.THIS], node.callee.type), 'Invalid function callee type');
           const callee = this.evaluateExpressionNode(node.callee, context);
           if (!callee) {
-            throw new Error(`could not evaluate '${_.get(node, 'callee.name', _.get(node, 'callee.property.name'))}'`);
+            throw new Error(`could not evaluate '${get(node, 'callee.name', get(node, 'callee.property.name'))}'`);
           }
-          const args = _.map(node.arguments, arg => this.evaluateExpressionNode(arg, context));
+          const args = map(node.arguments, arg => this.evaluateExpressionNode(arg, context));
           return callee.apply(null, args);
         }
         case this.types.ARROW: {
           const arrowContext = { ...context };
           return (...arrowArgs) => {
-            _.forEach(node.params || [], (n, i) => _.set(arrowContext, n.name, arrowArgs[i]));
+            (node.params || []).forEach((n, i) => set(arrowContext, n.name, arrowArgs[i]));
             return this.evaluateExpressionNode(node.body, arrowContext);
           }
         }
@@ -218,7 +223,7 @@ module.exports = class JsepEval {
         case this.types.MEMBER: {
           let path;
           let memberContext;
-          const chaining = [this.types.ARROW, this.types.CALL, this.types.ARRAY].includes(_.get(node, 'object.type'));
+          const chaining = [this.types.ARROW, this.types.CALL, this.types.ARRAY].includes(get(node, 'object.type'));
           if (chaining)  {
             memberContext = this.evaluateExpressionNode(node.object, context);
             path = this.propertyPath(node, memberContext);
@@ -227,17 +232,17 @@ module.exports = class JsepEval {
             path = this.getParameterPath(node, context);
           }
 
-          let found = _.get(memberContext, path);
-          if (_.isUndefined(found)) {
+          let found = get(memberContext, path);
+          if (found === undefined) {
             return undefined;
           }
-          if (_.isFunction(found)) {
+          if (typeof found === 'function') {
             if (chaining) {
               found = found.bind(memberContext);
-            } else if (!_.has(memberContext, path)) {
-              const seg = _.lastIndexOf(path, '.');
+            } else if (!has(memberContext, path)) {
+              const seg = lastIndexOf(path, '.');
               if (seg > 0) {
-                found = found.bind(_.get(memberContext, path.substr(0, seg)));
+                found = found.bind(get(memberContext, path.substr(0, seg)));
               }
             }
           }
