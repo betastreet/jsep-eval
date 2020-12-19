@@ -5,7 +5,7 @@
   "main": "src/jsep-eval.js",
   "scripts": {
     "test": "jest --collect-coverage",
-    "test-watch": "jest --watch"
+    "test-watch": "jest --watch --collect-coverage"
   },
   "repository": {
     "type": "git",
@@ -16,6 +16,9 @@
     "eval"
   ],
   "author": "Fredrik Carlsson",
+  "contributors": [
+    "6u"
+  ],
   "license": "MIT",
   "dependencies": {
     "jsep": "^0.3.3",
