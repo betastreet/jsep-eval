@@ -8,8 +8,8 @@ jsep-eval evaluates javascript expressions, and uses [jsep](http://jsep.from.so/
 #### Node.JS
 First, run `npm install jsep-eval`. Then, in your source file:
 ```javascript
-const jsepEval = require("jsep-eval");
-const evaluate = jsepEval.evaluate;
+const JsepEval = require("jsep-eval");
+const evaluate = new jsepEval().evaluate;
 const two = evaluate('1 + 1');
 const three = evaluate('two + 1', {two: 2});
 ```
@@ -38,6 +38,13 @@ evaluate('!false'); // returns true
 unaryOps['!'] = () => 'bob';
 evaluate('!false'); // returns 'bob'
 ```
+It is also possible to override or add operators:
+```javascript
+const stringEqual = (a, b) => _.isString(a) && _.isString(b) && a.localeCompare(b, undefined, { sensitivity: 'accent'}) === 0;
+jsepEval.addBinaryOp('==', (a, b) => (a == b || stringEqual(a, b)));
+expect(jsepEval.evaluate('"a" == "A"')).toBe(true);
+```
+For more examples, see the unit tests
 
 ### License
 jsep-eval is under the MIT license. See LICENSE file.
