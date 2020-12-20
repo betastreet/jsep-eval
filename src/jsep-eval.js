@@ -212,15 +212,19 @@ module.exports = class JsepEval {
     const operator = this.operators.binary[node.operator] || this.undefOperator;
     assert(includes(this.operators.binary, operator), 'Invalid binary operator');
     const left = this.evaluateExpressionNode(node.left, context);
+    if ((operator === this.operators.binary['&&'] && !left)
+      || (operator === this.operators.binary['||'] && left)) {
+      return left;
+    }
     const right = this.evaluateExpressionNode(node.right, context);
     return operator(left, right);
   }
 
   evaluateConditionalNode(node, context) {
     const test = this.evaluateExpressionNode(node.test, context);
-    const consequent = this.evaluateExpressionNode(node.consequent, context);
-    const alternate = this.evaluateExpressionNode(node.alternate, context);
-    return test ? consequent : alternate;
+    return test
+      ? this.evaluateExpressionNode(node.consequent, context)
+      : this.evaluateExpressionNode(node.alternate, context);
   }
 
   evaluateCallNode(node, context) {
