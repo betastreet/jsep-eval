@@ -1,6 +1,6 @@
 ## jsep-eval: evaluate javascript expressions
 
-jsep-eval evaluates javascript expressions, and uses [jsep](http://jsep.from.so/) to parse the expressions. A context can/should be supplied against which identifers are matched.
+jsep-eval evaluates javascript expressions, and uses [jsep](https://github.com/EricSmekens/jsep) to parse the expressions. A context can/should be supplied against which identifers are matched.
 
 
 ### Usage
